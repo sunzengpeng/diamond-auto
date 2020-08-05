@@ -15,14 +15,16 @@
  *****************************************************************************/
 #pragma once
 
+#include <assert.h>
+#include <future>
 #include <memory>
 #include <string>
 #include <thread>
-#include <future>
-#include <assert.h>
 
 #include "OpenZen.h"
+
 #include "ManagedThread.h"
+
 #include "cyber/common/log.h"
 #include "cyber/cyber.h"
 #include "cyber/init.h"
@@ -31,13 +33,9 @@
 #include "modules/drivers/LPMS/proto/service.pb.h"
 #include "modules/drivers/proto/imu.pb.h"
 
-
-namespace apollo
-{
-namespace drivers
-{
-namespace LPMS
-{
+namespace apollo {
+namespace drivers {
+namespace LPMS {
 
 using apollo::cyber::Component;
 using apollo::cyber::Reader;
@@ -45,68 +43,66 @@ using apollo::cyber::Writer;
 using apollo::drivers::LPMS::Content;
 using apollo::drivers::LPMS::Request;
 
-class LPMSDriverComponent : public Component<>
-{
-public:
-	std::shared_ptr<apollo::cyber::Node> node_;
+class LPMSDriverComponent : public Component<> {
+ public:
+  std::shared_ptr<apollo::cyber::Node> node_;
 
-	// Publisher
-	std::shared_ptr<apollo::cyber::Writer<apollo::drivers::Imu>> imu_writer_ =
-	            nullptr;
+  // Publisher
+  std::shared_ptr<apollo::cyber::Writer<apollo::drivers::Imu>> imu_writer_ =
+      nullptr;
 
-	// Service
+  // Service
 
-	// Parameters
-	std::string m_sensorName;
-	std::string m_sensorInterface;
-	std::string frame_id;
-	int m_baudrate = 0;
+  // Parameters
+  std::string m_sensorName;
+  std::string m_sensorInterface;
+  std::string frame_id;
+  int m_baudrate = 0;
 
-	LPMSDriverComponent() = default;
-	~LPMSDriverComponent(){};
-	/*{
-		if (device_thread_->joinable())
-		{
-			device_thread_->join();
-		}
-	}*/
-	typedef struct SensorThreadParams
-	{
-		zen::ZenClient* zenClient;
-		std::string frame_id;
-		std::shared_ptr<apollo::cyber::Writer<apollo::drivers::Imu>> imu_writer_;
-		bool useLpmsAccelerationConvention;
-	}SensorThreadParams;
+  LPMSDriverComponent() = default;
+  ~LPMSDriverComponent(){};
+  /*{
+          if (device_thread_->joinable())
+          {
+                  device_thread_->join();
+          }
+  }*/
+  typedef struct SensorThreadParams {
+    zen::ZenClient* zenClient;
+    std::string frame_id;
+    std::shared_ptr<apollo::cyber::Writer<apollo::drivers::Imu>> imu_writer_;
+    bool useLpmsAccelerationConvention;
+  } SensorThreadParams;
 
-	bool m_sensorThread_fun(const SensorThreadParams& param);
-	bool Init(/*std::shared_ptr<apollo::cyber::Node> node*/);
-	// bool Proc(const std::shared_ptr<Driver>& msg) override;
+  bool m_sensorThread_fun(const SensorThreadParams& param);
+  bool Init(/*std::shared_ptr<apollo::cyber::Node> node*/);
+  // bool Proc(const std::shared_ptr<Driver>& msg) override;
 
-	bool run(void);
-	void publishIsAutocalibrationActive();
-	bool setAutocalibration(const std::shared_ptr<Request>& req,
-	                        const std::shared_ptr<Content>& res);
-	bool resetHeading(const std::shared_ptr<Content>& request,
-	                  std::shared_ptr<Content>& response);
-	bool calibrateGyroscope(const std::shared_ptr<Content>& req,
-	                        const std::shared_ptr<Content>& res);
+  bool run(void);
+  void publishIsAutocalibrationActive();
+  bool setAutocalibration(const std::shared_ptr<Request>& req,
+                          const std::shared_ptr<Content>& res);
+  bool resetHeading(const std::shared_ptr<Content>& request,
+                    std::shared_ptr<Content>& response);
+  bool calibrateGyroscope(const std::shared_ptr<Content>& req,
+                          const std::shared_ptr<Content>& res);
 
-private:
-	std::unique_ptr<zen::ZenClient> m_zenClient;
-	std::unique_ptr<zen::ZenSensor> m_zenSensor;
-	std::unique_ptr<zen::ZenSensorComponent> m_zenImu;//receive and send message
+ private:
+  std::unique_ptr<zen::ZenClient> m_zenClient;
+  std::unique_ptr<zen::ZenSensor> m_zenSensor;
+  std::unique_ptr<zen::ZenSensorComponent> m_zenImu;  // receive and send
+                                                      // message
 
-	bool m_openzenVerbose;
-	bool m_useLpmsAccelerationConvention;
+  bool m_openzenVerbose;
+  bool m_useLpmsAccelerationConvention;
 
-	ManagedThread<SensorThreadParams> m_sensorThread;
+  ManagedThread<SensorThreadParams> m_sensorThread;
 
-	/*
-	const float cDegToRad = 3.1415926f / 180.0f;
-	const float cEarthG = 9.81f;
-	const float cMicroToTelsa = 1e-6f;
-	*/
-
+  /*
+  const float cDegToRad = 3.1415926f / 180.0f;
+  const float cEarthG = 9.81f;
+  const float cMicroToTelsa = 1e-6f;
+  */
 };
 
 CYBER_REGISTER_COMPONENT(LPMSDriverComponent)
